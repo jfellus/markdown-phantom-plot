@@ -4,7 +4,7 @@ import os
 
 class Phantom(object):
     def __init__(self):
-        self.proc = subprocess.Popen(["phantom-plot", "--multiple-files"], stdin=subprocess.PIPE)
+        self.proc = subprocess.Popen(["phantom-plot", "--multiple-files"], stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout = subprocess.PIPE, bufsize=0)
 
     def __del__(self):
         if self.proc:
@@ -14,11 +14,14 @@ class Phantom(object):
         if not self.proc:
             raise ValueError("phantomjs not launched")
         self.proc.stdin.write((os.path.realpath(inf) + " " + os.path.realpath(outf) + "\n").encode())
+        x = self.proc.stdout.readline().decode("utf-8")
+        if x != "ok\n":
+            raise ValueError(x)
 
 phantom = Phantom()
 
 
-def markdown_plot_file(inf, outf):
+def plot_file(inf, outf):
     return phantom.process(inf, outf)
 
 def main():
