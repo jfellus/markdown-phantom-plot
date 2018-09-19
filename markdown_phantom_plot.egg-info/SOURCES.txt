@@ -1,4 +1,5 @@
 setup.py
+svg2pdf
 markdown_phantom_plot.egg-info/PKG-INFO
 markdown_phantom_plot.egg-info/SOURCES.txt
 markdown_phantom_plot.egg-info/dependency_links.txt

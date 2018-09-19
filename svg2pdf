@@ -1,3 +1,8 @@
 #!/bin/bash
 
+if -z `which inkscape`; then
+  echo "svg2pdf requires inkscape. You can install using \$ apt install inkscape"
+  exit 1
+fi
+
 inkscape $1 --export-pdf $2
