@@ -12,15 +12,29 @@ class PhantomPlotExtension(markdown.Extension):
 
     def extendMarkdown(self, md, md_globals):
         self.md = md
-        md.treeprocessors.add('phantom-plot', PhantomPlotTreeProcessor(md), "_end")
+        self.ppt = PhantomPlotTreeProcessor(md);
+        md.treeprocessors.add('phantom-plot', self.ppt, "_end")
+
+    def kill(self):
+        markdown_phantom_plot.phantom.kill()
 
     def reset(self):
-        pass
+        self.ppt.reset()
 
-def process_plot_query(node, x, ext):
-    inf = x
+
+def process_plot_query(node, x, ext, plotID):
+    try:
+        os.mkdir("plots/")
+    except:
+        pass
+    inf = "plots/%i.pp" % plotID
+    with open(inf, "w") as f:
+        f.write(x)
+
     outf = os.path.splitext(inf)[0] + "." + ext
     node.text = ""
+    for child in list(node):
+        node.remove(child)
     try:
         markdown_phantom_plot.plot_file(inf, outf)
         with open(outf, "r") as f:
@@ -33,6 +47,7 @@ def process_plot_query(node, x, ext):
 class PhantomPlotTreeProcessor(markdown.treeprocessors.Treeprocessor):
     def __init__(self, md):
         self.md = md
+        self.plotID = 0
 
     def process(self, node, ext):
         if node.getchildren():
@@ -41,11 +56,19 @@ class PhantomPlotTreeProcessor(markdown.treeprocessors.Treeprocessor):
         if node.tag != "p":
              return node
 
-        RE = r'\s*PLOT\s+([^\s]+)\s*'
-        m = re.match(RE, node.text)
-        if m:
-            process_plot_query(node, m.group(1), ext)
+        try:
+            if node.text == "PLOT":
+                t = ""
+                for child in node.getchildren():
+                    t += child.tail
+                process_plot_query(node, t, ext, self.plotID)
+                self.plotID += 1
+        except Exception as e:
+            raise e
         return node
+
+    def reset(self):
+        self.plotID = 0
 
     def run(self, node):
         ext = "svg"

@@ -1,14 +1,21 @@
 import sys
 import subprocess
 import os
+import atexit
 
 class Phantom(object):
     def __init__(self):
-        self.proc = subprocess.Popen(["phantom-plot", "--multiple-files"], stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout = subprocess.PIPE, bufsize=0)
+        self.proc = subprocess.Popen(["phantom-plot", "--multiple-files"], stdin=subprocess.PIPE, stdout = subprocess.PIPE, bufsize=0)
 
     def __del__(self):
-        if self.proc:
-            self.proc.terminate()
+        self.kill()
+
+    def kill(self):
+        try:
+            self.proc.stdin.write(b"exit\n")
+            self.proc.wait()
+        except:
+            pass
 
     def process(self, inf, outf):
         if not self.proc:
@@ -20,9 +27,15 @@ class Phantom(object):
 
 phantom = Phantom()
 
+def cleanup():
+    if phantom:
+        phantom.kill()
+
+atexit.register(cleanup)
 
 def plot_file(inf, outf):
     return phantom.process(inf, outf)
+
 
 def main():
     while True:
@@ -31,7 +44,6 @@ def main():
         except:
             break
         phantom.process(inf, outf)
-        print("Processed " + inf + " -> " + outf)
 
 
 if __name__ == "__main__":
